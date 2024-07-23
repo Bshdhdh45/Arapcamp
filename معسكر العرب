@@ -1,0 +1,135 @@
+```bash
+npm install discord.js
+```
+
+#### 2. إعداد الملف الرئيسي للبوت `bot.js`
+```javascript
+const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const fs = require('fs');
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+client.commands = new Collection();
+
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    client.commands.set(command.name, command);
+}
+
+client.once('ready', () => {
+    console.log('Bot is online!');
+});
+
+client.on('messageCreate', async message => {
+    if (!message.content.startsWith('!') || message.author.bot) return;
+
+    const args = message.content.slice(1).split(/ +/);
+    const commandName = args.shift().toLowerCase();
+
+    if (!client.commands.has(commandName)) return;
+
+    const command = client.commands.get(commandName);
+
+    try {
+        await command.execute(message, args);
+    } catch (error) {
+        console.error(error);
+        message.reply('there was an error trying to execute that command!');
+    }
+});
+
+client.login('YOUR_BOT_TOKEN');
+```
+
+#### 3. إنشاء الأوامر في مجلد `commands`
+
+##### `commands/shop.js`
+```javascript
+module.exports = {
+    name: 'shop',
+name nice: ',
+    description: 'Display available items in the shop',
+    execute(message, args) {
+        const items = [
+            { name: 'Sword', price: 100 },
+            { name: 'Shield', price: 150 },
+            { name: 'Potion', price: 50 },
+        ];
+
+        let shopMessage = 'Available items:
+';
+        items.forEach(item => {
+            shopMessage += `${item.name} - ${item.price} coins
+`;
+        });
+
+        message.channel.send(shopMessage);
+    },
+};
+```
+
+##### `commands/buy.js`
+```javascript
+let userBalance = {};
+
+module.exports = {
+    name: 'buy',
+    description: 'Buy an item from the shop',
+    execute(message, args) {
+```
+```[]
+```
+
+##### `commands/balance.js`
+```javascript
+let userBalance = {};
+
+module.exports = {
+    name: 'balance',
+    description: 'Check your balance',
+    execute(message, args) {
+        const user = message.author.username;
+        const balance = userBalance[user] || 0; // return 0 if balance not found
+
+        message.channel.send(`${user}, your balance is ${balance} coins.`);
+    },
+};
+```
+
+##### `commands/addcoins.js`
+```javascript
+let userBalance = {};
+
+module.exports = {
+    name: 'addcoins',
+    description: 'Add coins to a user',
+    execute(message, args) {
+        if (message.author.id !== 'YOUR_USER_ID') return; // استبدل بـ ID الخاص بك
+
+        const user = message.mentions.users.first();
+        const amount = parseInt(args[1], 10);
+
+        if (!user || isNaN(amount)) {
+            return message.channel.send('Please specify a valid user and amount.');
+        }
+
+        const username = user.username;
+
+        if (!userBalance[username]) {
+            userBalance[username] = 0; // initialize balance if not exists
+        }
+
+        userBalance[username] += amount;
+        message.channel.send(`${amount} coins have been added to ${username}'s balance.`);
+    },
+};
+```
+
+### ملخص الأوامر:
+- لعرض المتجر: `!shop`
+- لشراء عنصر: `!buy Sword`
+- للتحقق من الرصيد: `!balance`
+- لإضافة قطع نقدية: `!addcoins @user 100`
+
+حظًا موفقًا في مشروعك! إذا كنت بحاجة إلى المزيد من المساعدة، أنا هنا دائمً
